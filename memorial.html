@@ -1,0 +1,32 @@
+
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Memorial Drive (Facing Boston)</title>
+  <link rel="stylesheet" href="./shared/ui.css" />
+  <script src="./shared/state.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Memorial Drive (Facing Boston)</h1>
+    <div class="card">
+      <p>This place has no letter task. Enjoy the view, take photos, then go back to the index to solve the next riddle.</p>
+
+    </div>
+
+    <div class="card">
+      <a class="btn" href="./index.html">Back to Homepage</a>
+    </div>
+  </div>
+
+  <script>
+    const PLACE = "memorial";
+    if(PLACE !== "memorial" && !BQuest.isPlaceUnlocked(PLACE)) { location.href = "./index.html#locked"; }
+    const _n = BQuest.getPlaceName(PLACE);
+    if(_n){ document.title = _n; const h1 = document.querySelector('h1'); if(h1) h1.textContent = _n; }
+
+  </script>
+</body>
+</html>

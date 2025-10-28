@@ -1,0 +1,55 @@
+
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Castle Island</title>
+  <link rel="stylesheet" href="./shared/ui.css" />
+  <script src="./shared/state.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Castle Island</h1>
+    <div class="card">
+      <p>Enter your letter and save it here.</p>
+
+      <div class='row' style='margin-top:6px'>
+        <input class='input' id='letter' maxlength='1' placeholder='Letter' />
+        <button class='btn' id='save'>Save</button>
+        <button class='btn' id='clear' style='background:#2f3b52;color:#e7eefe'>Clear</button>
+      </div>
+      <div id='status' class='progress'></div>
+
+    </div>
+
+    <div class="card">
+      <a class="btn" href="./index.html">Back to Homepage</a>
+    </div>
+  </div>
+
+  <script>
+    const PLACE = "castle";
+    if(PLACE !== "memorial" && !BQuest.isPlaceUnlocked(PLACE)) { location.href = "./index.html#locked"; }
+    const _n = BQuest.getPlaceName(PLACE);
+    if(_n){ document.title = _n; const h1 = document.querySelector('h1'); if(h1) h1.textContent = _n; }
+
+    const input = document.getElementById('letter');
+    const status = document.getElementById('status');
+    function render(){
+      const v = BQuest.getLetter(PLACE);
+      status.textContent = v ? `Saved: ${v}` : 'No letter saved yet';
+      if(v) input.value = v;
+    }
+    render();
+    document.getElementById('save').onclick = () => {
+      const v = (input.value||'').trim().toUpperCase();
+      if(!v || v.length!==1) { alert('Enter one letter'); return; }
+      BQuest.setLetter(PLACE, v);
+      render();
+    };
+    document.getElementById('clear').onclick = () => { BQuest.clearLetter(PLACE); input.value=''; render(); };
+
+  </script>
+</body>
+</html>

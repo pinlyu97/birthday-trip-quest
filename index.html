@@ -1,0 +1,268 @@
+
+<!doctype html>
+<html lang="zh">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Birthday Trip Quest</title>
+  <link rel="stylesheet" href="./shared/ui.css" />
+  <script src="./shared/state.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Birthday Trip Quest</h1>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center;">
+        <h2 style="margin:0;">Collected Letters</h2>
+        <button class="btn" id="reset" style="font-size:13px;padding:6px 10px;">Reset (Don't click me)</button>
+      </div>
+      <div class="progress" id="letters"></div>
+    </div>
+
+    <div class="card" id="riddleCard" style="display:none">
+      <h2>Riddle</h2>
+      <div id="riddleText" style="margin-bottom:10px">test</div>
+      <div class="row" style="margin-top:6px">
+        <input id="riddleInput" class="input" placeholder="Answer" />
+        <button class="btn" id="riddleSubmit">Submit</button>
+        <button class="iconbtn" id="tipBtn">💡 Tip</button>
+      </div>
+      <div class="tip hidden" id="riddleTip" style="margin-top:10px"></div>
+      <div class="progress" id="riddleHint"></div>
+    </div>
+
+    <div class="card">
+      <h2>Unlocked Places</h2>
+      <div id="places" class="grid"></div>
+      <div class="progress small" id="placeNote"></div>
+    </div>
+
+    <div class="card" id="finalCard" style="display:none">
+      <h2>Final</h2>
+      <p id="finalIntro" class="progress"></p>
+      <div class="row">
+        <input id="finalWord" class="input" placeholder="Enter the word" />
+        <button class="btn" id="finalSubmit">Submit</button>
+      </div>
+      <div class="progress" id="finalResult"></div>
+    </div>
+  </div>
+
+  <script>
+    
+
+const FLOW = [
+  // 1) First riddle unlocks Memorial Drive
+  { unlockPlace:"memorial",
+    riddle:"Geese are watching Boston skyline.",
+    tip:"This is a drive.",
+    accept:["t"]
+  },
+  // 2) Then unlock Harvard Square (placeholder test)
+  { unlockPlace:"harvard",
+    riddle:"test",
+    tip:"test",
+    accept:["t"]
+  },
+  // 3) Then unlock Cambridge Cemetery (user texts)
+  { unlockPlace:"cemetery",
+    riddle:"Maybe the quietest place isn’t always lonely.",
+    tip:"You can get the complete view of the big city.",
+    accept:["t"]
+  },
+  // 4) Boston College (photo riddle + tip)
+  { unlockPlace:"bc",
+    riddle:`<a href="#" id="photoLink">This is a photo</a>
+            <div id="photoWrap" class="hidden" style="margin-top:8px">
+              <img src="./assets/img/boston-college.png" alt="Clue photo"
+                   loading="lazy" decoding="async"
+                   style="max-width:100%;max-height:60vh;object-fit:contain;border-radius:10px;border:1px solid #223048">
+            </div>`,
+    tip:"Georgia Tech, #32",
+    accept:["t"]
+  },
+  // 5) Fenway (emoji-only)
+  { unlockPlace:"fenway",
+    riddle:"🏠",
+    tip:"🧦",
+    accept:["t"]
+  },
+  // 6) Arnold Arboretum
+  { unlockPlace:"arboretum",
+    riddle:"You and your love’s story begins.",
+    tip:"Last year’s birthday.",
+    accept:["t"]
+  },
+  // 7) Castle Island (placeholder riddle + text tip)
+  { unlockPlace:"castle",
+    riddle:"(Photos to be added soon)",
+    tip:"No crown, no shore, Yet both in name I carry. What am I?",
+    accept:["t"]
+  },
+  // 8) Final: custom place name
+  { unlockPlace:"garden",
+    riddle:"Pick somewhere on your own.",
+    tip:"You can already choose by yourself, why do you still need a tip?",
+    accept:["t"]
+  }
+];
+
+
+
+    const LABELS = {
+      memorial: "Memorial Drive",
+      harvard: "Harvard Square",
+      cemetery:"Cambridge Cemetery",
+      bc: "Boston College",
+      fenway: "Fenway",
+      arboretum: "Arnold Arboretum",
+      castle: "Castle Island",
+      garden: "Boston Public Garden"
+    };
+
+    function renderLetters(){
+      const arr = BQuest.lettersList();
+      document.getElementById("letters").textContent = arr.length ? arr.join(", ") : "(none yet)";
+      const finalCard = document.getElementById("finalCard");
+      const intro = document.getElementById("finalIntro");
+      const resEl = document.getElementById("finalResult");
+      if (BQuest.allLettersFilled()){
+        finalCard.style.display = "";
+        // Show the collected letters
+        const places = ["harvard","cemetery","bc","fenway","arboretum","castle","garden"];
+        const letters = places.map(p => BQuest.getLetter(p) || "").join("");
+        intro.textContent = `Now you have collected all letters. Here are all letters you've collected: ${letters}`;
+        resEl.textContent = "";
+      } else {
+        finalCard.style.display = "none";
+        intro.textContent = "";
+        resEl.textContent = "";
+      }
+    }
+
+    function renderPlaces(){
+      const wrap = document.getElementById("places");
+      wrap.innerHTML = "";
+      const list = BQuest.unlockedList();
+      for(const k of list){
+        const letter = BQuest.getLetter(k);
+        const status = (k==="memorial") ? "no letter here" : (letter ? `saved: ${letter}` : "no letter saved");
+        const a = document.createElement("a");
+        a.href = `./${k}.html`;
+        a.className = "btn";
+        a.textContent = "Open";
+        const div = document.createElement("div");
+        div.className = "kv";
+        div.innerHTML = `<div><b>${BQuest.getPlaceName(k) || LABELS[k]}</b><div class="small">${status}</div></div>`;
+        div.appendChild(a);
+        wrap.appendChild(div);
+      }
+      const note = document.getElementById("placeNote");
+      if(list.length === 0){
+        note.textContent = "Solve the first riddle to unlock your first stop.";
+      } else {
+        note.textContent = "";
+      }
+    }
+
+    function renderRiddle(){
+      const card = document.getElementById("riddleCard");
+      const stage = BQuest.getStage();
+      if (stage >= FLOW.length) { card.style.display = "none"; return; }
+      if (!BQuest.canShowNextRiddle()) { card.style.display = "none"; return; }
+      const cur = FLOW[stage];
+      card.style.display = "";
+      document.getElementById("riddleText").innerHTML = cur.riddle;
+      document.getElementById("riddleHint").textContent = "";
+      const tip = document.getElementById("riddleTip");
+      tip.textContent = cur.tip || "";
+      tip.classList.add("hidden");
+
+      setTimeout(()=>{
+        const link = document.getElementById("photoLink");
+        const wrap = document.getElementById("photoWrap");
+        if(link && wrap){ link.onclick = (e)=>{ e.preventDefault(); wrap.classList.toggle("hidden"); }; }
+      },0);
+
+      document.getElementById("riddleInput").value = "";
+    }
+
+    function submitRiddle(){
+      const stage = BQuest.getStage();
+      if (stage >= FLOW.length) return;
+      const cur = FLOW[stage];
+      const inputEl = document.getElementById("riddleInput");
+      const raw = (inputEl.value || "").trim();
+      const val = raw.toLowerCase();
+      let ok = cur.accept.includes(val);
+      if (cur.unlockPlace === 'garden') {
+        ok = raw.length > 0; // accept any non-empty
+        if (ok) { BQuest.setPlaceName('garden', raw); }
+      }
+      const hint = document.getElementById("riddleHint");
+      if(!ok){
+        if (!val) {
+          hint.textContent = "Try something! Don't make me empty!";
+          return;
+        }
+        hint.textContent = (cur.unlockPlace === "garden") ? "Not yet. (test answer: t)" : "Not correct, keep on guessing!";
+        return;
+      }
+      BQuest.unlockPlace(cur.unlockPlace);
+      BQuest.setStage(stage + 1);
+      renderAll();
+    }
+
+    function renderAll(){
+      renderLetters();
+      renderPlaces();
+      renderRiddle();
+    }
+
+    document.getElementById("tipBtn").onclick = () => {
+      const el = document.getElementById("riddleTip");
+      el.classList.toggle("hidden");
+    };
+
+    document.getElementById("riddleSubmit").onclick = submitRiddle;
+
+    // Final word checking
+    const finalBtn = document.getElementById("finalSubmit");
+    if (finalBtn) {
+      finalBtn.onclick = () => {
+        const input = (document.getElementById("finalWord").value || "").trim();
+        const resEl = document.getElementById("finalResult");
+        const places = ["harvard","cemetery","bc","fenway","arboretum","castle","garden"];
+        const letters = places.map(p => (BQuest.getLetter(p) || "").toUpperCase());
+        const expected = ["A","G","L","I","R","V","B"];
+
+        if (!input) {
+          resEl.textContent = "Try something! Don't make me empty!";
+          return;
+        }
+
+        if (input.toLowerCase() === "bvlgari") {
+          resEl.innerHTML = 'Congratulations! Next Stop! <a href="https://maps.app.goo.gl/EeTXUcTfD9uPe5S28" target="_blank" rel="noopener">Open in Google Maps</a>';
+          return;
+        }
+
+        // Check positional correctness
+        const wrongIdx = [];
+        for (let i = 0; i < expected.length; i++) {
+          if (letters[i] !== expected[i]) wrongIdx.push(i+1); // 1-based
+        }
+        if (wrongIdx.length) {
+          resEl.textContent = "Positions incorrect: " + wrongIdx.join(", ");
+        } else {
+          resEl.textContent = "Letters are correct, but the order is wrong.";
+        }
+      };
+    }
+
+    document.getElementById("reset").onclick = () => { BQuest.resetAll(true); renderAll(); };
+
+    renderAll();
+  </script>
+</body>
+</html>
