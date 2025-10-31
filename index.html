@@ -10,7 +10,7 @@
 </head>
 <body>
   <div class="container">
-    <h1>Birthday Trip Quest</h1>
+    <h1 style="text-align:center;margin:16px 0;">Birthday Trip Quest</h1>
 
     <div class="card">
       <div class="row" style="justify-content:space-between;align-items:center;">
@@ -57,19 +57,19 @@ const FLOW = [
   { unlockPlace:"memorial",
     riddle:"Geese are watching Boston skyline.",
     tip:"This is a drive.",
-    accept:["t"]
+    accept:["memorial", "memorial drive"]
   },
   // 2) Then unlock Harvard Square (placeholder test)
   { unlockPlace:"harvard",
-    riddle:"test",
-    tip:"test",
-    accept:["t"]
+    riddle:"Three books reveal the truth.",
+    tip:"If you want to have a waffle?",
+    accept:["harvard", "harvard square"]
   },
   // 3) Then unlock Cambridge Cemetery (user texts)
   { unlockPlace:"cemetery",
     riddle:"Maybe the quietest place isn’t always lonely.",
     tip:"You can get the complete view of the big city.",
-    accept:["t"]
+    accept:["cemetery", "cambridge cemetery"]
   },
   // 4) Boston College (photo riddle + tip)
   { unlockPlace:"bc",
@@ -80,25 +80,30 @@ const FLOW = [
                    style="max-width:100%;max-height:60vh;object-fit:contain;border-radius:10px;border:1px solid #223048">
             </div>`,
     tip:"Georgia Tech, #32",
-    accept:["t"]
+    accept:["boston college"]
   },
   // 5) Fenway (emoji-only)
   { unlockPlace:"fenway",
     riddle:"🏠",
     tip:"🧦",
-    accept:["t"]
+    accept:["fenway", "fenway triangle"]
   },
   // 6) Arnold Arboretum
   { unlockPlace:"arboretum",
     riddle:"You and your love’s story begins.",
     tip:"Last year’s birthday.",
-    accept:["t"]
+    accept:["arnold arboretum"]
   },
   // 7) Castle Island (placeholder riddle + text tip)
   { unlockPlace:"castle",
-    riddle:"(Photos to be added soon)",
+    riddle:`<a href="#" id="photoLink">This is a photo</a>
+                <div id="photoWrap" class="hidden" style="margin-top:8px">
+                  <img src="./assets/img/castle-island.png" alt="Clue photo"
+                       loading="lazy" decoding="async"
+                       style="max-width:100%;object-fit:contain;border-radius:10px;border:1px solid #223048">
+                </div>`,
     tip:"No crown, no shore, Yet both in name I carry. What am I?",
-    accept:["t"]
+    accept:["castle island"]
   },
   // 8) Final: custom place name
   { unlockPlace:"garden",
@@ -174,6 +179,7 @@ const FLOW = [
       const cur = FLOW[stage];
       card.style.display = "";
       document.getElementById("riddleText").innerHTML = cur.riddle;
+      setTimeout(()=>{ const link=document.getElementById("photoLink"); const wrap=document.getElementById("photoWrap"); if(link&&wrap){ link.onclick=(e)=>{e.preventDefault(); wrap.classList.toggle("hidden");};}},0);
       document.getElementById("riddleHint").textContent = "";
       const tip = document.getElementById("riddleTip");
       tip.textContent = cur.tip || "";
@@ -255,7 +261,7 @@ const FLOW = [
         if (wrongIdx.length) {
           resEl.textContent = "Positions incorrect: " + wrongIdx.join(", ");
         } else {
-          resEl.textContent = "Letters are correct, but the order is wrong!";
+          resEl.textContent = "Letters are correct, but the order is wrong.";
         }
       };
     }
